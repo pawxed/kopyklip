@@ -1,0 +1,79 @@
+name: KopyKlip
+options:
+  bundleIdPrefix: com.pawxed
+  deploymentTarget:
+    iOS: "16.0"
+
+targets:
+  KopyKlip:
+    type: application
+    platform: iOS
+    sources:
+      - path: KopyKlip
+    info:
+      path: KopyKlip/Info.plist
+      properties:
+        CFBundleDisplayName: KopyKlip
+        CFBundleName: KopyKlip
+        UILaunchScreen: {}
+        ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes:
+          - audio
+    entitlements:
+      path: KopyKlip/KopyKlip.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.pawxed.kopyklip
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pawxed.kopyklip
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+    dependencies:
+      - target: KopyKlipKeyboard
+        embed: true
+        codeSign: false
+
+  KopyKlipKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: KopyKlipKeyboard
+      - path: KopyKlip/Shared.swift
+    info:
+      path: KopyKlipKeyboard/Info.plist
+      properties:
+        CFBundleName: KopyKlipKeyboard
+        CFBundleDisplayName: KopyKlip
+        NSExtension:
+          NSExtensionAttributes:
+            IsASCIICapable: true
+            PrefersRightToLeft: false
+            PrimaryLanguage: en-US
+            RequestsOpenAccess: true
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).KeyboardViewController"
+    entitlements:
+      path: KopyKlipKeyboard/KopyKlipKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.pawxed.kopyklip
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pawxed.kopyklip.keyboard
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+
+schemes:
+  KopyKlip:
+    build:
+      targets:
+        KopyKlip: [run, test, profile, analyze, archive]
+        KopyKlipKeyboard: [run, archive]
+    run:
+      target: KopyKlip
+    archive:
+      target: KopyKlip
