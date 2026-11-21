@@ -19,7 +19,6 @@ final class PipClipboardMonitor: NSObject, ObservableObject {
     private let displayView = PipDisplayView()
     private var controller: AVPictureInPictureController?
     private var timer: Timer?
-    private var lastChange = UIPasteboard.general.changeCount
     private var paused = false
     private var latestText = "Monitoring clipboard"
 
@@ -31,6 +30,7 @@ final class PipClipboardMonitor: NSObject, ObservableObject {
     }
 
     func start() {
+        ClipServer.shared.start()
         guard AVPictureInPictureController.isPictureInPictureSupported() else { return }
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers])
@@ -71,8 +71,7 @@ final class PipClipboardMonitor: NSObject, ObservableObject {
 
     private func startPolling() {
         guard timer == nil else { return }
-        lastChange = UIPasteboard.general.changeCount
-        timer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.check()
         }
     }
@@ -83,11 +82,15 @@ final class PipClipboardMonitor: NSObject, ObservableObject {
     }
 
     private func check() {
-        let pasteboard = UIPasteboard.general
-        guard pasteboard.changeCount != lastChange else { return }
-        lastChange = pasteboard.changeCount
-        guard let text = pasteboard.string, !text.isEmpty else { return }
-        KopyStore.addClip(text)
+        if let clip = KopyStore.capturePasteboard() {
+            StoreChange.postPip()
+            latestText = clip.isImage ? "[Image]" : clip.text
+            render()
+            return
+        }
+        guard let newest = KopyStore.clips().first else { return }
+        let text = newest.isImage ? "[Image]" : newest.text
+        guard text != latestText else { return }
         latestText = text
         render()
     }
@@ -200,7 +203,6 @@ extension PipClipboardMonitor: AVPictureInPictureSampleBufferPlaybackDelegate {
 
     func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, setPlaying playing: Bool) {
         paused = !playing
-        if playing { startPolling() } else { stopPolling() }
         render()
     }
 

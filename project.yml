@@ -47,6 +47,8 @@ targets:
       properties:
         CFBundleName: KopyKlipKeyboard
         CFBundleDisplayName: KopyKlip
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         NSExtension:
           NSExtensionAttributes:
             IsASCIICapable: true
